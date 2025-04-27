@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/polkadot-staking-game/static/css/main.56791b4e.css",
+    "main.js": "/polkadot-staking-game/static/js/main.04feee06.js",
+    "index.html": "/polkadot-staking-game/index.html",
+    "main.56791b4e.css.map": "/polkadot-staking-game/static/css/main.56791b4e.css.map",
+    "main.04feee06.js.map": "/polkadot-staking-game/static/js/main.04feee06.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.56791b4e.css",
+    "static/js/main.04feee06.js"
+  ]
+}
