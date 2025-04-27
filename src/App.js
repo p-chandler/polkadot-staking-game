@@ -18,13 +18,16 @@ const gameAbi = [
   "event RewardDistributed(address indexed winner, uint256 amount)"
 ];
 
+// Deployed contract address on Moonbase Alpha
+const DEPLOYED_CONTRACT_ADDRESS = "0x7B3ad466410e29Aa6C84e8621a9dDefab8DD9B9d";
+
 function App() {
   // State variables
   const [provider, setProvider] = useState(null);
   const [signer, setSigner] = useState(null);
   const [account, setAccount] = useState('');
   const [gameContract, setGameContract] = useState(null);
-  const [gameAddress, setGameAddress] = useState('');
+  const [gameAddress, setGameAddress] = useState(DEPLOYED_CONTRACT_ADDRESS);
   const [stakeAmount, setStakeAmount] = useState('0.01');
   const [unstakeAmount, setUnstakeAmount] = useState('0.01');
   const [stakedBalance, setStakedBalance] = useState('0');
@@ -36,6 +39,7 @@ function App() {
   const [notification, setNotification] = useState('');
   const [isOwner, setIsOwner] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
+  const [networkName, setNetworkName] = useState('');
 
   // Connect to MetaMask
   const connectWallet = async () => {
@@ -62,10 +66,14 @@ function App() {
       
       // Check if we're on the correct network
       const network = await provider.getNetwork();
-      if (network.chainId.toString() !== '420420421') {
-        setNotification("Please connect to Westend Asset Hub Testnet (Chain ID: 420420421)");
+      setNetworkName(network.name);
+      
+      if (network.chainId.toString() === '1287') {
+        setNotification("Connected to Moonbase Alpha (Moonbeam Testnet)");
+        // Auto-connect to deployed contract
+        connectToDeployedContract(signer);
       } else {
-        setNotification("Connected to Westend Asset Hub Testnet");
+        setNotification("Please connect to Moonbase Alpha (Chain ID: 1287) to interact with the deployed contract");
       }
       
       setIsLoading(false);
@@ -76,7 +84,29 @@ function App() {
     }
   };
 
-  // Connect to contract
+  // Connect to deployed contract
+  const connectToDeployedContract = async (signerToUse) => {
+    try {
+      setIsLoading(true);
+      setError('');
+      
+      // Create game contract instance
+      const game = new ethers.Contract(DEPLOYED_CONTRACT_ADDRESS, gameAbi, signerToUse);
+      setGameContract(game);
+      
+      // Load game data
+      await loadGameData(game);
+      
+      setNotification("Connected to deployed contract on Moonbase Alpha!");
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error connecting to deployed contract:", error);
+      setError(error.message || "Failed to connect to deployed contract");
+      setIsLoading(false);
+    }
+  };
+
+  // Connect to custom contract
   const connectToContract = async () => {
     try {
       setIsLoading(true);
@@ -143,7 +173,7 @@ function App() {
   // Stake tokens
   const stake = async () => {
     if (demoMode) {
-      setNotification("In demo mode: Staked " + stakeAmount + " WND successfully (simulated)");
+      setNotification("In demo mode: Staked " + stakeAmount + " DEV successfully (simulated)");
       setStakedBalance((parseFloat(stakedBalance) + parseFloat(stakeAmount)).toFixed(2));
       setTotalStaked((parseFloat(totalStaked) + parseFloat(stakeAmount)).toFixed(2));
       setRewardPool((parseFloat(rewardPool) + parseFloat(stakeAmount) / 10).toFixed(2));
@@ -184,7 +214,7 @@ function App() {
         setError("Cannot unstake more than your staked balance");
         return;
       }
-      setNotification("In demo mode: Unstaked " + unstakeAmount + " WND successfully (simulated)");
+      setNotification("In demo mode: Unstaked " + unstakeAmount + " DEV successfully (simulated)");
       setStakedBalance((parseFloat(stakedBalance) - parseFloat(unstakeAmount)).toFixed(2));
       setTotalStaked((parseFloat(totalStaked) - parseFloat(unstakeAmount)).toFixed(2));
       setWinningProbability(parseFloat(stakedBalance) > 0 ? ((parseFloat(stakedBalance) - parseFloat(unstakeAmount)) * 100 / (parseFloat(totalStaked) - parseFloat(unstakeAmount))).toFixed(0) : "0");
@@ -220,7 +250,7 @@ function App() {
   // Distribute reward
   const distributeReward = async () => {
     if (demoMode) {
-      setNotification("In demo mode: Reward of " + rewardPool + " WND distributed successfully (simulated)");
+      setNotification("In demo mode: Reward of " + rewardPool + " DEV distributed successfully (simulated)");
       setRewardPool("0");
       return;
     }
@@ -253,7 +283,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>Play-to-Earn Token Staking Game</h1>
-        <p>Built on Polkadot Asset Hub</p>
+        <p>Built on Polkadot Ecosystem (Moonbeam)</p>
       </header>
       
       <main className="App-main">
@@ -265,12 +295,23 @@ function App() {
             <button onClick={enableDemoMode} className="demo-button">
               Try Demo Mode
             </button>
+            <div className="network-info">
+              <p>This application uses a smart contract deployed on Moonbase Alpha (Moonbeam Testnet).</p>
+              <p>Please configure MetaMask with:</p>
+              <ul>
+                <li>Network Name: Moonbase Alpha</li>
+                <li>RPC URL: https://rpc.api.moonbase.moonbeam.network</li>
+                <li>Chain ID: 1287</li>
+                <li>Currency Symbol: DEV</li>
+              </ul>
+            </div>
             {error && <p className="error">{error}</p>}
           </div>
         ) : (
           <div className="game-container">
             <div className="account-info">
               <p>Connected Account: {account}</p>
+              <p>Network: {networkName || "Unknown"}</p>
               {demoMode && <p className="demo-badge">DEMO MODE</p>}
             </div>
             
@@ -289,6 +330,9 @@ function App() {
                 <button onClick={connectToContract} disabled={isLoading}>
                   {isLoading ? "Connecting..." : "Connect to Contract"}
                 </button>
+                <button onClick={() => connectToDeployedContract(signer)} className="primary-button">
+                  Connect to Deployed Contract
+                </button>
                 <button onClick={enableDemoMode} className="demo-button">
                   Try Demo Mode Instead
                 </button>
@@ -300,15 +344,15 @@ function App() {
                 <div className="game-info">
                   <div className="info-item">
                     <span>Your Staked Balance:</span>
-                    <span>{stakedBalance} WND</span>
+                    <span>{stakedBalance} {demoMode ? "DEV" : "DEV"}</span>
                   </div>
                   <div className="info-item">
                     <span>Total Staked:</span>
-                    <span>{totalStaked} WND</span>
+                    <span>{totalStaked} {demoMode ? "DEV" : "DEV"}</span>
                   </div>
                   <div className="info-item">
                     <span>Reward Pool:</span>
-                    <span>{rewardPool} WND</span>
+                    <span>{rewardPool} {demoMode ? "DEV" : "DEV"}</span>
                   </div>
                   <div className="info-item">
                     <span>Your Winning Probability:</span>
@@ -320,7 +364,7 @@ function App() {
                   <div className="stake">
                     <h3>Stake Tokens</h3>
                     <div className="form-group">
-                      <label>Amount (WND):</label>
+                      <label>Amount (DEV):</label>
                       <input
                         type="text"
                         value={stakeAmount}
@@ -335,7 +379,7 @@ function App() {
                   <div className="unstake">
                     <h3>Unstake Tokens</h3>
                     <div className="form-group">
-                      <label>Amount (WND):</label>
+                      <label>Amount (DEV):</label>
                       <input
                         type="text"
                         value={unstakeAmount}
@@ -372,7 +416,10 @@ function App() {
       
       <footer className="App-footer">
         <p>© 2025 Play-to-Earn Token Staking Game | Built for Polkadot Asset Hub Hackathon</p>
-        <p><a href="https://github.com/p-chandler/polkadot-staking-game" target="_blank" rel="noopener noreferrer">GitHub Repository</a></p>
+        <p>
+          <a href="https://github.com/p-chandler/polkadot-staking-game" target="_blank" rel="noopener noreferrer">GitHub Repository</a> | 
+          <a href="https://moonbase.moonscan.io/address/0x7B3ad466410e29Aa6C84e8621a9dDefab8DD9B9d" target="_blank" rel="noopener noreferrer">View Contract on Block Explorer</a>
+        </p>
       </footer>
     </div>
   );
