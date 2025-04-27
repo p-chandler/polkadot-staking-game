@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/polkadot-staking-game/static/css/main.56791b4e.css",
-    "main.js": "/polkadot-staking-game/static/js/main.1c753a32.js",
+    "main.js": "/polkadot-staking-game/static/js/main.1be52bbd.js",
     "index.html": "/polkadot-staking-game/index.html",
     "main.56791b4e.css.map": "/polkadot-staking-game/static/css/main.56791b4e.css.map",
-    "main.1c753a32.js.map": "/polkadot-staking-game/static/js/main.1c753a32.js.map"
+    "main.1be52bbd.js.map": "/polkadot-staking-game/static/js/main.1be52bbd.js.map"
   },
   "entrypoints": [
     "static/css/main.56791b4e.css",
-    "static/js/main.1c753a32.js"
+    "static/js/main.1be52bbd.js"
   ]
 }
